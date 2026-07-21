@@ -26,7 +26,7 @@ def index():
 
 if __name__ == '__main__':
     # Configuración del servidor
-    port = int(os.getenv('PORT', 500))  # Railway usa PORT env variable
+    port = int(os.getenv('PORT', 5000))  # Railway usa PORT env variable
     debug = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
     
     print(f"INFO: Iniciando Job Monitor API en puerto {port}")
