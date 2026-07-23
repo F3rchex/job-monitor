@@ -1,7 +1,8 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from src.api.auth import require_api_key
 from src.scrapers.scraper import JobScraper
 from src.telegram.notifier import TelegramNotifier
+from src.chatbot.chat_service import ChatService
 
 #Creamos Blueprint para agrupar rutas de la API
 api_blueprint = Blueprint('api', __name__)
@@ -74,4 +75,41 @@ def trigger_scrapping():
         return jsonify({
             "status": "error",
             "mensaje": mensaje_error
+        }), 500
+        
+#Creamos nueva instancia para que el historial no sea compartido entre usuarios y que cada request sea independiente
+@api_blueprint.route("/chat", methods=['POST'])
+@require_api_key
+def chat_endpoint():
+    try:
+        #Obtenemos datos de la request
+        data = request.get_json()
+        
+        if not data or 'message' not in data:
+            return jsonify({
+                "error":"Falta el campo 'message' en el request"
+            }), 400
+            
+        user_message = data['message']
+        
+        if not user_message or not user_message.strip():
+            return jsonify({
+                "error":"El mensaje no puede estar vacio"
+            }), 400
+            
+        chat = ChatService()
+        chat.start_conversation()
+        
+        #Procesamos el mensaje
+        respuesta = chat.chat(user_message)
+        
+        return jsonify({
+            "response":respuesta
+        }), 200
+        
+    except Exception as e:
+        print(f'ERROR: error en endpoint /chat: {str(e)}')
+        return jsonify({
+            "error":"Erros interno del servidor",
+            "detalle": str(e)
         }), 500

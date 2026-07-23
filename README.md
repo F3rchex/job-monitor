@@ -1,39 +1,108 @@
-# 🔍 Job Monitor - Monitor de Ofertas de Empleo
+# Job Monitor - Monitor de Ofertas de Empleo
 
 Sistema automatizado de scraping que busca ofertas de empleo de Python en Madrid, detecta nuevas ofertas y envía notificaciones diarias a Telegram.
 
-##  Características
+**ESTADO: EN PRODUCCIÓN** - Desplegado en VPS DigitalOcean, ejecutándose automáticamente cada día a las 11:00 AM desde julio 2026.
 
--  **Scraping de múltiples fuentes**: InfoJobs e Indeed
--  **Detección inteligente**: Identifica ofertas nuevas comparando por link único
--  **Almacenamiento JSON**: Historial de scraping con timestamp
--  **Notificaciones Telegram**: Mensajes formateados con emojis
--  **Automatización n8n**: (Próximamente)
--  **Chatbot IA con OpenAI**: (Próximamente)
+## Características
 
-##  Arquitectura del Proyecto
+- **Scraping de múltiples fuentes**: InfoJobs e Indeed
+- **Detección inteligente**: Identifica ofertas nuevas comparando por link único
+- **Almacenamiento JSON**: Historial de scraping con timestamp
+- **Notificaciones Telegram**: Mensajes formateados push
+- **API REST Flask**: Endpoints HTTP con autenticación Bearer token
+- **Automatización n8n**: Workflow activo ejecutándose diariamente
+- **Chatbot IA con OpenAI**: Consulta ofertas con GPT-4o-mini
+- **Bot Telegram conversacional**: Comandos y mensajes libres
+- **Despliegue en producción**: VPS DigitalOcean con servicios systemd
+
+## Arquitectura del Proyecto
 
 ```
 job-monitor/
 ├── src/
+│   ├── api/
+│   │   ├── auth.py           # Decorador @require_api_key
+│   │   └── routes.py         # Endpoints /health, /trigger-scraping, /chat
+│   ├── chatbot/
+│   │   ├── openai_client.py  # Cliente OpenAI GPT-4o-mini
+│   │   └── chat_service.py   # Servicio de chat con function calling
 │   ├── scrapers/
-│   │   ├── infojobs.py      # Scraper InfoJobs (BeautifulSoup)
+│   │   ├── infojobs.py       # Scraper InfoJobs (BeautifulSoup)
 │   │   ├── indeed.py         # Scraper Indeed (Selenium)
 │   │   └── scraper.py        # Orquestador principal
 │   ├── storage/
 │   │   └── json_storage.py   # Gestión de almacenamiento
 │   ├── telegram/
-│   │   └── notifier.py       # Notificaciones Telegram
+│   │   ├── notifier.py       # Notificaciones push
+│   │   └── bot_handler.py    # Bot conversacional
 │   └── config.py             # Configuración (tokens, API keys)
 ├── data-infojobs/            # JSONs de InfoJobs
 ├── data-indeed/              # JSONs de Indeed
-├── main.py                   # Script principal
-├── test_scraper.py           # Test de scraping básico
-├── test_new_offers.py        # Test de detección de nuevas
-└── test_telegram.py          # Test de conexión Telegram
+├── app.py                    # Servidor Flask API
+├── main.py                   # Script principal (ejecución manual)
+├── test_chat.py              # Test endpoint /chat
+└── test_bot_telegram.py      # Test bot conversacional
 ```
 
-##  Instalación
+## Arquitectura de Producción
+
+```
+VPS DigitalOcean (Frankfurt)
+├── Flask API (puerto 5001)
+│   └── systemd service: job-monitor.service
+│   └── Endpoints: /health, /trigger-scraping, /chat
+│
+├── Bot Telegram conversacional
+│   └── systemd service: telegram-bot.service
+│   └── Comandos: /start, /help, /ofertas + mensajes libres
+│
+├── n8n (puerto 5678)
+│   └── systemd service: n8n.service
+│
+└── Workflow n8n activo
+    └── Schedule Trigger (11:00 AM diario)
+        └── HTTP POST /trigger-scraping (con API key)
+            └── Scraping → Notificación Telegram
+```
+
+## Despliegue en Producción
+
+El proyecto está desplegado en un VPS DigitalOcean:
+
+- **IP pública:** 164.92.138.18
+- **API:** http://164.92.138.18:5001
+- **n8n:** http://164.92.138.18:5678
+- **Región:** Frankfurt (FRA1)
+- **Recursos:** 2GB RAM, 1 vCPU, 50GB SSD
+- **Coste:** $12/mes
+
+### Servicios configurados
+
+**Flask API (systemd):**
+- Auto-arranque al iniciar servidor
+- Restart automático si falla
+- Logs: `sudo journalctl -u job-monitor`
+
+**Bot Telegram (systemd):**
+- Auto-arranque al iniciar servidor
+- Restart automático si falla
+- Logs: `sudo journalctl -u telegram-bot`
+
+**n8n (systemd):**
+- Auto-arranque al iniciar servidor
+- Workflow activo con Schedule Trigger
+- Logs: `sudo journalctl -u n8n`
+
+### Seguridad
+
+- Usuario no-root con SSH key authentication
+- Firewall UFW: solo puertos 22, 5000, 5678 abiertos
+- API protegida con Bearer token
+- Variables sensibles en archivo .env
+
+
+## Instalación Local (Desarrollo)
 
 ### 1. Clonar repositorio
 
@@ -66,16 +135,59 @@ OPENAI_API_KEY=tu_api_key_aqui
 # Telegram
 TELEGRAM_BOT_TOKEN=tu_bot_token_aqui
 TELEGRAM_CHAT_ID=tu_chat_id_aqui
+
+# API Key para autenticación (generar token seguro)
+API_KEY=tu_token_seguro_aqui
 ```
 
 **Cómo obtener las credenciales:**
 
-- **Bot Token**: Habla con [@BotFather](https://t.me/BotFather) en Telegram → `/newbot`
-- **Chat ID**: Habla con [@userinfobot](https://t.me/userinfobot) → te dará tu ID
+- **Bot Token**: Hablar con [@BotFather](https://t.me/BotFather) en Telegram → `/newbot`
+- **Chat ID**: Hablar con [@userinfobot](https://t.me/userinfobot) → te dará tu ID
 
-##  Uso
+## Uso
 
-### Script Principal (Recomendado)
+### API Flask (Producción)
+
+Arranca el servidor Flask API:
+
+```bash
+python app.py
+```
+
+Endpoints disponibles:
+- **GET /health**: Health check (sin autenticación)
+- **POST /trigger-scraping**: Ejecuta scraping (requiere API key)
+- **POST /chat**: Chatbot conversacional (requiere API key)
+
+Ejemplos de uso:
+```bash
+# Trigger scraping
+curl -X POST http://localhost:5001/trigger-scraping \
+  -H "Authorization: Bearer TU_API_KEY"
+
+# Chatbot
+curl -X POST http://localhost:5001/chat \
+  -H "Authorization: Bearer TU_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "¿Cuántas ofertas hay?"}'
+```
+
+### Bot Telegram Conversacional
+
+Arranca el bot conversacional:
+
+```bash
+python test_bot_telegram.py
+```
+
+**Comandos disponibles:**
+- `/start` - Mensaje de bienvenida
+- `/help` - Ayuda
+- `/ofertas` - Resumen de ofertas disponibles
+- Mensajes libres: "¿Qué ofertas hay de Python senior?"
+
+### Script Principal (Manual)
 
 Ejecuta scraping, detecta nuevas ofertas y envía a Telegram:
 
@@ -100,28 +212,6 @@ python test_new_offers.py
 python test_telegram.py
 ```
 
-## 🔧 Componentes Técnicos
-
-### Scrapers
-
-**InfoJobs** (`src/scrapers/infojobs.py`):
-- Scraping con BeautifulSoup
-- Extrae: título, empresa, ubicación, modalidad, contrato, jornada, salario, link
-- Clasificación inteligente de campos por contenido
-
-**Indeed** (`src/scrapers/indeed.py`):
-- Scraping con Selenium (Chrome headless)
-- Solución al bloqueo 403 de Indeed
-- Extrae: título, empresa, ubicación, metadata, link
-
-### Detección de Nuevas Ofertas
-
-El sistema compara ofertas usando el **link como identificador único**:
-- InfoJobs: `of-ib711602e534316bab822ce4249ee46`
-- Indeed: `jk=7bc5f5f2d189a262`
-
-Usa sets de Python (O(1)) para comparación eficiente.
-
 ### Almacenamiento
 
 Guarda JSON con estructura:
@@ -137,15 +227,35 @@ Guarda JSON con estructura:
 
 Archivos: `infojobs_2026-07-10_21-11-44.json`
 
-### Notificaciones Telegram
+### API REST
 
-Formato con emojis:
-- 🔵 InfoJobs
-- 🟢 Indeed
-- 🏢 Empresa
-- 📍 Ubicación
-- 💼 Modalidad
-- 🔗 Link
+**Endpoints:**
+
+`GET /health` - Health check (sin autenticación)
+```json
+{
+  "status": "healthy",
+  "service": "job-monitor-api"
+}
+```
+
+`POST /trigger-scraping` - Ejecuta scraping (requiere API key)
+```bash
+Authorization: Bearer YOUR_API_KEY
+```
+
+Respuesta exitosa:
+```json
+{
+  "status": "ok",
+  "nuevas_ofertas": 5,
+  "notificado": true,
+  "detalles": {
+    "infojobs": 3,
+    "indeed": 2
+  }
+}
+```
 
 ##  Notas Técnicas
 
@@ -165,16 +275,26 @@ LinkedIn no está incluido porque:
 - Viola términos de servicio
 - Complejidad desproporcionada
 
-##  Próximos Pasos
+## Stack Tecnológico
 
-1.  ~~Sistema de scraping funcional~~
-2.  ~~Detección de ofertas nuevas~~
-3.  ~~Notificaciones Telegram~~
-4.  Automatización con n8n (ejecutar cada 6-12 horas)
-5.  Chatbot IA con OpenAI (análisis inteligente de ofertas)
+**Backend:**
+- Python 3.12
+- Flask 3.0.3 (API REST)
+- OpenAI 1.35.0 (GPT-4o-mini)
+- Selenium 4.18.1 (scraping Indeed)
+- BeautifulSoup4 4.15.0 (scraping InfoJobs)
+- python-telegram-bot 22.8 (bot conversacional)
 
-##  Requisitos del Sistema
+**Automatización:**
+- n8n 2.8.4 (workflow automation)
+- Node.js 20.20.2
 
+**Infraestructura:**
+- Ubuntu 24.04 LTS
+- systemd (gestión servicios)
+- UFW (firewall)
+
+**Requisitos locales:**
 - Python 3.8+
 - Chrome/Chromium (para Selenium)
 - Conexión a internet
