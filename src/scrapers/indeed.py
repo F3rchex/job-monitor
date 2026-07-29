@@ -29,9 +29,10 @@ class Indeed:
         self.chrome_options.add_argument('--disable-gpu')
         self.chrome_options.add_argument('--disable-software-rasterizer')
         self.chrome_options.add_argument('--remote-debugging-port=9222')
+        self.chrome_options.add_argument('--window-size=1920,1080')
 
         # User-Agent para parecer más humano
-        self.chrome_options.add_argument('--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
+        self.chrome_options.add_argument('--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36')
 
     def _get_driver(self):
         """Crea una instancia del navegador Chrome"""
@@ -92,7 +93,10 @@ class Indeed:
             # 3. Esperar a que cargue la página (importante para JavaScript)
             print("Esperando a que cargue la página...")
             time.sleep(10)  # Espera 10 segundos para que cargue todo
-
+            
+            driver.execute_script("window.scrollTo(0, 1000);")
+            time.sleep(2)
+            
             # 4. Obtener el HTML final (después de que JavaScript lo modifique)
             page_source = driver.page_source
             
