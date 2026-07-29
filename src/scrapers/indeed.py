@@ -91,10 +91,13 @@ class Indeed:
 
             # 3. Esperar a que cargue la página (importante para JavaScript)
             print("Esperando a que cargue la página...")
-            time.sleep(3)  # Espera 3 segundos para que cargue todo
+            time.sleep(10)  # Espera 10 segundos para que cargue todo
 
             # 4. Obtener el HTML final (después de que JavaScript lo modifique)
             page_source = driver.page_source
+            
+            print(f"DEBUG: HTML length: {len(page_source)} caracteres")
+            print(f"DEBUG: ¿Contiene 'cardOutline'? {('cardOutline' in page_source)}")
 
             # 5. Parsear con BeautifulSoup (como antes)
             soup = BeautifulSoup(page_source, 'html.parser')
