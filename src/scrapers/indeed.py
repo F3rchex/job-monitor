@@ -2,11 +2,8 @@ import time
 from typing import List, Dict
 from bs4 import BeautifulSoup
 
-# Importaciones de Selenium
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
+# Selenum con anti deteccion
+import undetected_chromedriver as uc
 
 # Importar notificador para alertas
 from src.telegram.notifier import TelegramNotifier
@@ -18,7 +15,7 @@ class Indeed:
     def __init__(self):
         # Ya no usamos requests.Session porque usamos Selenium
         # Configuramos las opciones de Chrome
-        self.chrome_options = Options()
+        self.chrome_options = uc.ChromeOptions()
 
         # Modo headless: Chrome se ejecuta sin ventana visible
         self.chrome_options.add_argument('--headless')
@@ -35,10 +32,8 @@ class Indeed:
         self.chrome_options.add_argument('--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36')
 
     def _get_driver(self):
-        """Crea una instancia del navegador Chrome"""
-        # ChromeDriverManager().install() descarga automáticamente ChromeDriver
-        service = Service(ChromeDriverManager().install())
-        driver = webdriver.Chrome(service=service, options=self.chrome_options)
+        """Crea una instancia del navegador Chrome anti-detección"""
+        driver = uc.Chrome(options=self.chrome_options, version_main=150)
         return driver
 
     def parse_offers_indeed(self, soup) -> Dict:
