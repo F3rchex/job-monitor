@@ -27,12 +27,14 @@ def get_browser_headers():
     """
     Devuelve headers completos que simulan un navegador real
     Incluye User-Agent aleatorio
+
+    NOTA: No incluimos 'Accept-Encoding' para que requests lo maneje automáticamente
+    y descomprima correctamente las respuestas gzip
     """
     return {
         'User-Agent': get_random_user_agent(),
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
         'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
-        'Accept-Encoding': 'gzip, deflate, br',
         'DNT': '1',
         'Connection': 'keep-alive',
         'Upgrade-Insecure-Requests': '1',
