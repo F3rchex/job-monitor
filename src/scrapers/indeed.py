@@ -17,17 +17,15 @@ class Indeed:
         # Configuramos las opciones de Chrome
         # Configuración MÍNIMA para evitar detección
         self.chrome_options = uc.ChromeOptions()
-        
-        # Solo opciones esenciales
-        self.chrome_options.add_argument('--headless=new')  # Nuevo modo headless
-        self.chrome_options.add_argument('--window-size=1920,1080')
+        # Configuración MÍNIMA
+        # Sin opciones adicionales
         
         # NO añadir más opciones - pueden causar detección
 
     def _get_driver(self):
         """Crea una instancia del navegador Chrome anti-detección"""
-        # Sin version_main - dejar que autodetecte
-        driver = uc.Chrome(options=self.chrome_options, use_subprocess=True)
+        # Configuración más básica posible
+        driver = uc.Chrome(headless=True, use_subprocess=False)
         return driver
 
     def parse_offers_indeed(self, soup) -> Dict:
