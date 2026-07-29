@@ -12,7 +12,7 @@ def main():
 
     nuevas = scraper.get_new_offers()
 
-    total_nuevas = len(nuevas['infojobs']) + len(nuevas['indeed'])
+    total_nuevas = len(nuevas['infojobs']) + len(nuevas['tecnoempleo'])
 
     if total_nuevas > 0:
         print(f"\nEnviando {total_nuevas} ofertas nuevas a Telegram...")
