@@ -241,6 +241,10 @@ python main.py
 - Python 3.8+
 - Chrome/Chromium (para Selenium)
 
+## Proximamente
+
+Dado que tenemos un script para borrar los .json generados por ahora no es necesario una BD dado que no es un proyecto con mucha informacion en el workflow, mas adelante posiblemente se implemente una BD para realizar pruebas con otro proyecto en paralelo.
+
 ---
 
 **Desarrollado por Fernando Chávez** | Proyecto de portfolio para práctica de scraping y automatización

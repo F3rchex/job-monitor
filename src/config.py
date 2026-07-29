@@ -1,16 +1,16 @@
 import os
 from dotenv import load_dotenv
 
-# Cargar variables del archivo .env
+#Cargar variables del archivo .env
 load_dotenv()
 
-# Variables de configuración
+#Variables de configuración
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 
 
-# Validación: asegurar que los tokens existen
+#Validación: asegurar que los tokens existen
 if not OPENAI_API_KEY:
     raise ValueError(
         "OPENAI_API_KEY no está configurado. "

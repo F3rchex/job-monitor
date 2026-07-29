@@ -1,4 +1,3 @@
-#!/bin/bash
 
 # Mantener solo los ultimos 10 archivos de cada fuente
 echo "=== Limpieza de datos antiguos - $(date) ==="

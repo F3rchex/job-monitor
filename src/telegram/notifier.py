@@ -6,16 +6,16 @@ from src.config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
 
 
 class TelegramNotifier:
-    # Envía notificaciones de ofertas de empleo a Telegram
+    #Envía notificaciones de ofertas de empleo a Telegram
 
     def __init__(self, bot_token: str = None, chat_id: str = None):
         self.bot_token = bot_token or TELEGRAM_BOT_TOKEN
-        # Convertir chat_id a entero (Telegram lo requiere así)
+        #Convertir chat_id a entero (Telegram lo requiere así)
         self.chat_id = int(chat_id or TELEGRAM_CHAT_ID)
         self.bot = Bot(token=self.bot_token)
 
     def _format_offer(self, oferta: Dict, numero: int) -> str:
-        # Formatea una oferta individual
+        #Formatea una oferta individual
         fuente = "[IJ]" if oferta.get('fuente') == 'InfoJobs' else "[ID]"
 
         mensaje = f"{fuente} *{numero}. {oferta.get('title', 'Sin título')}*\n"
@@ -45,7 +45,7 @@ class TelegramNotifier:
         return mensaje
 
     def _create_summary_message(self, nuevas: Dict[str, List[Dict]]) -> str:
-        # Crea el mensaje resumen con todas las ofertas nuevas
+        #Crea el mensaje resumen con todas las ofertas nuevas
         total_nuevas = len(nuevas['infojobs']) + len(nuevas['tecnoempleo'])
 
         mensaje = "*NUEVAS OFERTAS DE EMPLEO*\n"
@@ -74,7 +74,7 @@ class TelegramNotifier:
         return mensaje
 
     async def send_message(self, text: str) -> bool:
-        # Envía un mensaje de texto a Telegram
+        #Envía un mensaje de texto a Telegram
         try:
             await self.bot.send_message(
                 chat_id=self.chat_id,
@@ -88,7 +88,7 @@ class TelegramNotifier:
             return False
 
     async def send_new_offers(self, nuevas: Dict[str, List[Dict]]) -> bool:
-        # Envía notificación con las ofertas nuevas
+        #Envía notificación con las ofertas nuevas
         total_nuevas = len(nuevas['infojobs']) + len(nuevas['tecnoempleo'])
 
         if total_nuevas == 0:
@@ -97,14 +97,14 @@ class TelegramNotifier:
 
         mensaje = self._create_summary_message(nuevas)
 
-        # Telegram tiene límite de 4096 caracteres por mensaje
+        #Telegram tiene límite de 4096 caracteres por mensaje
         if len(mensaje) > 4000:
             return await self._send_long_message(mensaje)
         else:
             return await self.send_message(mensaje)
 
     async def _send_long_message(self, mensaje: str) -> bool:
-        # Divide y envía mensajes largos en múltiples partes
+        #Divide y envía mensajes largos en múltiples partes
         partes = mensaje.split('\n\n')
         mensaje_actual = partes[0] + "\n\n"
         exito = True
@@ -124,7 +124,7 @@ class TelegramNotifier:
         return exito
 
     def notify_new_offers(self, nuevas: Dict[str, List[Dict]]) -> bool:
-        # Versión síncrona para usar sin async
+        #Versión síncrona para usar sin async
         return asyncio.run(self.send_new_offers(nuevas))
 
     async def send_error_async(self, mensaje_error: str) -> bool:

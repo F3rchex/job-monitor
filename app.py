@@ -9,7 +9,7 @@ app = Flask(__name__)
 
 app.register_blueprint(api_blueprint)
 
-# Ruta raíz (para verificar que funciona)
+#Ruta raíz (para verificar que funciona)
 @app.route('/')
 def index():
     return {
