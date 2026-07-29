@@ -8,6 +8,9 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 
+# Importar notificador para alertas
+from src.telegram.notifier import TelegramNotifier
+
 
 class Indeed:
     BASE_URL_INDEED = "https://es.indeed.com/jobs?q=python&l=Madrid"
@@ -23,6 +26,9 @@ class Indeed:
         # Opciones para evitar problemas en servidores/Docker
         self.chrome_options.add_argument('--no-sandbox')
         self.chrome_options.add_argument('--disable-dev-shm-usage')
+        self.chrome_options.add_argument('--disable-gpu')
+        self.chrome_options.add_argument('--disable-software-rasterizer')
+        self.chrome_options.add_argument('--remote-debugging-port=9222')
 
         # User-Agent para parecer más humano
         self.chrome_options.add_argument('--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
@@ -108,7 +114,17 @@ class Indeed:
             return ofertas
 
         except Exception as e:
-            print(f"Error inesperado en Indeed: {e}")
+            error_msg = f"Error inesperado en Indeed: {e}"
+            print(error_msg)
+
+            # Alertar inmediatamente por Telegram
+            try:
+                notifier = TelegramNotifier()
+                notifier.send_error(f"ERROR en scraper Indeed:\n\n{str(e)}")
+                print("OK: Error de Indeed notificado a Telegram")
+            except Exception as telegram_error:
+                print(f"ERROR: No se pudo enviar alerta a Telegram: {telegram_error}")
+
             return []
 
         finally:

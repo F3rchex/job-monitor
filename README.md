@@ -97,7 +97,7 @@ El proyecto está desplegado en un VPS DigitalOcean:
 ### Seguridad
 
 - Usuario no-root con SSH key authentication
-- Firewall UFW: solo puertos 22, 5000, 5678 abiertos
+- Firewall UFW: solo puertos 22, 5001, 5678 abiertos
 - API protegida con Bearer token
 - Variables sensibles en archivo .env
 
@@ -129,15 +129,17 @@ pip install -r requirements.txt
 Crea un archivo `.env` en la raíz del proyecto:
 
 ```env
-# OpenAI (para chatbot IA - próximamente)
+# OpenAI (chatbot IA)
 OPENAI_API_KEY=tu_api_key_aqui
 
 # Telegram
 TELEGRAM_BOT_TOKEN=tu_bot_token_aqui
 TELEGRAM_CHAT_ID=tu_chat_id_aqui
 
-# API Key para autenticación (generar token seguro)
+# API Flask
 API_KEY=tu_token_seguro_aqui
+PORT=5001
+CHAT_API_URL=http://localhost:5001/chat
 ```
 
 **Cómo obtener las credenciales:**
@@ -195,85 +197,17 @@ Ejecuta scraping, detecta nuevas ofertas y envía a Telegram:
 python main.py
 ```
 
-### Scripts de Prueba
+### API REST Endpoints
 
-**Test de scraping básico:**
-```bash
-python test_scraper.py
-```
+- `GET /health` - Health check
+- `POST /trigger-scraping` - Ejecuta scraping (requiere API key)
+- `POST /chat` - Chatbot conversacional (requiere API key)
 
-**Test de detección de ofertas nuevas:**
-```bash
-python test_new_offers.py
-```
+## Notas Técnicas
 
-**Test de conexión Telegram:**
-```bash
-python test_telegram.py
-```
-
-### Almacenamiento
-
-Guarda JSON con estructura:
-
-```json
-{
-  "timestamp": "2026-07-10T21:11:44",
-  "source": "infojobs",
-  "count": 5,
-  "offers": [...]
-}
-```
-
-Archivos: `infojobs_2026-07-10_21-11-44.json`
-
-### API REST
-
-**Endpoints:**
-
-`GET /health` - Health check (sin autenticación)
-```json
-{
-  "status": "healthy",
-  "service": "job-monitor-api"
-}
-```
-
-`POST /trigger-scraping` - Ejecuta scraping (requiere API key)
-```bash
-Authorization: Bearer YOUR_API_KEY
-```
-
-Respuesta exitosa:
-```json
-{
-  "status": "ok",
-  "nuevas_ofertas": 5,
-  "notificado": true,
-  "detalles": {
-    "infojobs": 3,
-    "indeed": 2
-  }
-}
-```
-
-##  Notas Técnicas
-
-### InfoJobs API
-
-InfoJobs tiene una API oficial, pero el registro está cerrado desde julio 2026. Por eso usamos scraping.
-
-### Indeed y Selenium
-
-Indeed bloquea peticiones HTTP simples (Error 403). Selenium usa un navegador real Chrome headless para evitar detección.
-
-### LinkedIn
-
-LinkedIn no está incluido porque:
-- Requiere login obligatorio
-- Protección anti-scraping muy agresiva
-- Viola términos de servicio
-- Complejidad desproporcionada
+- **InfoJobs:** Scraping con BeautifulSoup (API cerrada desde julio 2026)
+- **Indeed:** Selenium headless (bloquea peticiones HTTP simples)
+- **LinkedIn:** No incluido (requiere login, viola ToS)
 
 ## Stack Tecnológico
 
@@ -294,18 +228,9 @@ LinkedIn no está incluido porque:
 - systemd (gestión servicios)
 - UFW (firewall)
 
-**Requisitos locales:**
+**Requisitos:**
 - Python 3.8+
 - Chrome/Chromium (para Selenium)
-- Conexión a internet
-
-##  Contribuir
-
-Este es un proyecto de aprendizaje personal. No se aceptan contribuciones por el momento.
-
-##  Licencia
-
-Proyecto personal sin licencia definida.
 
 ---
 
