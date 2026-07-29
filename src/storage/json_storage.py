@@ -8,14 +8,14 @@ class JSONStorage:
     #Gestiona el almacenamiento de ofertas en archivos JSON
 
     def __init__(self, base_dir: str = "."):
-        
+
         self.base_dir = base_dir
         self.infojobs_dir = os.path.join(base_dir, "data-infojobs")
-        self.indeed_dir = os.path.join(base_dir, "data-indeed")
+        self.tecnoempleo_dir = os.path.join(base_dir, "data-tecnoempleo")
 
         # Crear directorios si no existen
         os.makedirs(self.infojobs_dir, exist_ok=True)
-        os.makedirs(self.indeed_dir, exist_ok=True)
+        os.makedirs(self.tecnoempleo_dir, exist_ok=True)
 
     def _generate_filename(self, source: str) -> str:
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -28,10 +28,10 @@ class JSONStorage:
         # Determinar directorio según la fuente
         if source.lower() == 'infojobs':
             directory = self.infojobs_dir
-        elif source.lower() == 'indeed':
-            directory = self.indeed_dir
+        elif source.lower() == 'tecnoempleo':
+            directory = self.tecnoempleo_dir
         else:
-            raise ValueError(f"Fuente desconocida: {source}. Debe ser 'infojobs' o 'indeed'")
+            raise ValueError(f"Fuente desconocida: {source}. Debe ser 'infojobs' o 'tecnoempleo'")
 
         # Generar nombre de archivo
         filename = self._generate_filename(source.lower())
@@ -57,8 +57,8 @@ class JSONStorage:
         # Determinar directorio
         if source.lower() == 'infojobs':
             directory = self.infojobs_dir
-        elif source.lower() == 'indeed':
-            directory = self.indeed_dir
+        elif source.lower() == 'tecnoempleo':
+            directory = self.tecnoempleo_dir
         else:
             return None
 
@@ -81,11 +81,11 @@ class JSONStorage:
         return data
 
     def get_all_offers_from_latest(self) -> Dict[str, List[Dict]]:
-    
+
         #Obtiene las ofertas de los archivos más recientes de ambas fuentes
         result = {
             'infojobs': [],
-            'indeed': []
+            'tecnoempleo': []
         }
 
         # InfoJobs
@@ -94,11 +94,11 @@ class JSONStorage:
             data = self.load_offers(latest_infojobs)
             result['infojobs'] = data.get('offers', [])
 
-        # Indeed
-        latest_indeed = self.get_latest_file('indeed')
-        if latest_indeed:
-            data = self.load_offers(latest_indeed)
-            result['indeed'] = data.get('offers', [])
+        # TecnoEmpleo
+        latest_tecnoempleo = self.get_latest_file('tecnoempleo')
+        if latest_tecnoempleo:
+            data = self.load_offers(latest_tecnoempleo)
+            result['tecnoempleo'] = data.get('offers', [])
 
         return result
 
@@ -106,8 +106,8 @@ class JSONStorage:
         #Cuenta cuántos archivos JSON hay de una fuente
         if source.lower() == 'infojobs':
             directory = self.infojobs_dir
-        elif source.lower() == 'indeed':
-            directory = self.indeed_dir
+        elif source.lower() == 'tecnoempleo':
+            directory = self.tecnoempleo_dir
         else:
             return 0
 

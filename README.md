@@ -6,7 +6,8 @@ Sistema automatizado de scraping que busca ofertas de empleo de Python en Madrid
 
 ## Características
 
-- **Scraping de múltiples fuentes**: InfoJobs e Indeed
+- **Scraping de múltiples fuentes**: InfoJobs y TecnoEmpleo
+- **Anti-detección**: Random delays, User-Agents rotados, headers completos
 - **Detección inteligente**: Identifica ofertas nuevas comparando por link único
 - **Almacenamiento JSON**: Historial de scraping con timestamp
 - **Notificaciones Telegram**: Mensajes formateados push
@@ -26,19 +27,21 @@ job-monitor/
 │   │   └── routes.py         # Endpoints /health, /trigger-scraping, /chat
 │   ├── chatbot/
 │   │   ├── openai_client.py  # Cliente OpenAI GPT-4o-mini
-│   │   └── chat_service.py   # Servicio de chat con function calling
+│   │   └── chat_service.py   # Servicio de chat with function calling
 │   ├── scrapers/
 │   │   ├── infojobs.py       # Scraper InfoJobs (BeautifulSoup)
-│   │   ├── indeed.py         # Scraper Indeed (Selenium)
+│   │   ├── tecnoempleo.py    # Scraper TecnoEmpleo (BeautifulSoup)
 │   │   └── scraper.py        # Orquestador principal
 │   ├── storage/
 │   │   └── json_storage.py   # Gestión de almacenamiento
 │   ├── telegram/
 │   │   ├── notifier.py       # Notificaciones push
 │   │   └── bot_handler.py    # Bot conversacional
+│   ├── utils/
+│   │   └── scraper_utils.py  # Anti-detección (delays, headers, UA rotation)
 │   └── config.py             # Configuración (tokens, API keys)
 ├── data-infojobs/            # JSONs de InfoJobs
-├── data-indeed/              # JSONs de Indeed
+├── data-tecnoempleo/         # JSONs de TecnoEmpleo
 ├── app.py                    # Servidor Flask API
 ├── main.py                   # Script principal (ejecución manual)
 ├── test_chat.py              # Test endpoint /chat
@@ -206,8 +209,15 @@ python main.py
 ## Notas Técnicas
 
 - **InfoJobs:** Scraping con BeautifulSoup (API cerrada desde julio 2026)
-- **Indeed:** Selenium headless (bloquea peticiones HTTP simples)
+- **TecnoEmpleo:** Scraping con BeautifulSoup (portal IT específico, menos protección)
+- **Indeed:** Descartado (anti-bot muy agresivo, requiere proxies caros)
 - **LinkedIn:** No incluido (requiere login, viola ToS)
+
+### Medidas anti-detección implementadas:
+- Random delays (2-5 segundos entre requests)
+- User-Agent rotation (6 variantes diferentes)
+- Headers completos (11 headers que simulan navegador real)
+- Session persistence (mantiene cookies)
 
 ## Stack Tecnológico
 
@@ -215,8 +225,7 @@ python main.py
 - Python 3.12
 - Flask 3.0.3 (API REST)
 - OpenAI 1.35.0 (GPT-4o-mini)
-- Selenium 4.18.1 (scraping Indeed)
-- BeautifulSoup4 4.15.0 (scraping InfoJobs)
+- BeautifulSoup4 4.15.0 (scraping InfoJobs y TecnoEmpleo)
 - python-telegram-bot 22.8 (bot conversacional)
 
 **Automatización:**

@@ -40,5 +40,5 @@ graphify-out
 
 directrices.md
 data-infojobs/*.json
-data-indeed/*.json
+data-tecnoempleo/*.json
 cleanup.log

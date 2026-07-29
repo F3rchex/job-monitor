@@ -27,13 +27,13 @@ def trigger_scrapping():
         
         #Ejecutamos el scraping
         nuevas = scraper.get_new_offers()
-        
-        total_nuevas = len(nuevas['infojobs']) + len(nuevas['indeed'])
-        
+
+        total_nuevas = len(nuevas['infojobs']) + len(nuevas['tecnoempleo'])
+
         if total_nuevas > 0:
             print(f'INFO: {total_nuevas} ofertas nuevas encontradas')
             exito = notifier.notify_new_offers(nuevas)
-            
+
             if exito:
                 print(f'OK: Notificación enviada a Telegram')
                 return jsonify({
@@ -42,7 +42,7 @@ def trigger_scrapping():
                     "notificado": True,
                     "detalles": {
                         "infojobs": len(nuevas['infojobs']),
-                        "indeed": len(nuevas["indeed"])
+                        "tecnoempleo": len(nuevas["tecnoempleo"])
                     }
                 }), 200
             else:

@@ -1,18 +1,16 @@
 import requests
 from typing import List, Dict
 from bs4 import BeautifulSoup
-
+from src.utils.scraper_utils import get_browser_headers, random_delay
 
 
 class Infojobs:
     BASE_URL_INFOJOBS = "https://www.infojobs.net/jobsearch/search-results/list.xhtml?keyword=python%20madrid&provinceIds=33&searchByType=province&referer=search-filtered&segmentId=&page=1&sortBy=RELEVANCE&onlyForeignCountry=false&countryIds=17&sinceDate=_24_HOURS"
-    
+
     def __init__(self):
         self.session = requests.Session()
-        self.session.headers.update({
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Accept-Language": "es-ES,es;q=0.9"
-        })
+        # Usar headers completos con User-Agent aleatorio
+        self.session.headers.update(get_browser_headers())
         
     def parse_offers_infojobs(self, soup) -> Dict:
         try:
@@ -85,6 +83,10 @@ class Infojobs:
     def scrape(self) -> List[Dict]:
         try:
             print(f"Obteniendo ofertas de InfoJobs...")
+
+            # Delay aleatorio antes del request (simular comportamiento humano)
+            random_delay(2, 5)
+
             response = self.session.get(self.BASE_URL_INFOJOBS)
             response.raise_for_status()
             

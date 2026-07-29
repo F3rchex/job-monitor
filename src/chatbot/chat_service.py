@@ -17,16 +17,16 @@ class ChatService:
             return offers
         except Exception as e:
             print(f'No se pudieron cargar ofertas')
-            return {'infojobs':[], 'indeed':[]}
+            return {'infojobs':[], 'tecnoempleo':[]}
     
     #convertimos json en texto para el mensaje system del LLM, NECESARIO
     def build_context(self, offers): 
-        if not offers or (not offers['infojobs'] and not offers['indeed']):
+        if not offers or (not offers['infojobs'] and not offers['tecnoempleo']):
             return "Aun no hay ofertas disponibles"
         
         total_infojobs = len(offers['infojobs'])
-        total_indeed = len(offers['indeed'])
-        total_offers = total_indeed + total_infojobs
+        total_tecnoempleo = len(offers['tecnoempleo'])
+        total_offers = total_tecnoempleo + total_infojobs
         
         context = f"Tienes acceso a {total_offers} ofertas de trabajo:\n"
         
@@ -35,10 +35,10 @@ class ChatService:
             for i, offer in enumerate(offers['infojobs'], 1):
                 context += self._format_offer(i, offer, 'infojobs')
                 
-        if total_indeed > 0:
-            context += f'\nINDEED: {total_indeed} ofertas\n'
-            for i, offer in enumerate(offers['indeed'], 1):
-                context += self._format_offer(i, offer, 'indeed')
+        if total_tecnoempleo > 0:
+            context += f'\nINDEED: {total_tecnoempleo} ofertas\n'
+            for i, offer in enumerate(offers['tecnoempleo'], 1):
+                context += self._format_offer(i, offer, 'tecnoempleo')
               
         return context
     
@@ -65,7 +65,7 @@ class ChatService:
             texto += f' - Jornada: {jornada}\n'
             texto += f' - Salario: {salario}\n'
             
-        elif source == 'indeed':
+        elif source == 'tecnoempleo':
             metadata = offer.get('metadata', [])
             if metadata:
                 #Dado que metadata es una lista
