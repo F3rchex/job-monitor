@@ -58,15 +58,6 @@ class JobScraper:
 
         return resultados
 
-        #Metodos alternativos por si solo quisieramos usar uno
-    # def scrape_infojobs_only(self) -> List[Dict]:
-    #     """Scrapea solo InfoJobs"""
-    #     return self.infojobs.scrape()
-
-    # def scrape_indeed_only(self) -> List[Dict]:
-    #     """Scrapea solo Indeed"""
-    #     return self.indeed.scrape()
-
     def get_all_offers_unified(self) -> List[Dict]:
         #Obtiene todas las ofertas en una lista unificada con campo 'fuente'
         resultados = self.scrape_all()

@@ -17,16 +17,16 @@ def main():
             print(f"   Ubicación: {oferta['ubicacion']}")
             print(f"   Link: {oferta['link']}")
 
-    if nuevas['indeed']:
-        print("\n Primeras 3 ofertas nuevas de Indeed:")
-        for i, oferta in enumerate(nuevas['indeed'][:3], 1):
+    if nuevas['tecnoempleo']:
+        print("\n Primeras 3 ofertas nuevas de TecnoEmpleo:")
+        for i, oferta in enumerate(nuevas['tecnoempleo'][:3], 1):
             print(f"\n{i}. {oferta['title']}")
             print(f"   Empresa: {oferta['empresa']}")
             print(f"   Ubicación: {oferta['ubicacion']}")
             print(f"   Link: {oferta['link']}")
 
     # Resumen final
-    total_nuevas = len(nuevas['infojobs']) + len(nuevas['indeed'])
+    total_nuevas = len(nuevas['infojobs']) + len(nuevas['tecnoempleo'])
     if total_nuevas == 0:
         print("\n No hay ofertas nuevas desde el último scraping")
     else:

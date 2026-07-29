@@ -170,7 +170,7 @@ class ChatService:
                     "type": "function",
                     "function": {
                         "name": "load_job_offers",
-                        "description": "Obtenenemos el ultimo listado de ofertas scrapeado de Infojobs e Indeed.",
+                        "description": "Obtenemos el ultimo listado de ofertas scrapeado de InfoJobs y TecnoEmpleo.",
                         "parameters": {
                             "type": "object",
                             "properties": {},  # ← Vacío porque no necesita parámetros

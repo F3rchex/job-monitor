@@ -46,12 +46,12 @@ class TelegramNotifier:
 
     def _create_summary_message(self, nuevas: Dict[str, List[Dict]]) -> str:
         # Crea el mensaje resumen con todas las ofertas nuevas
-        total_nuevas = len(nuevas['infojobs']) + len(nuevas['indeed'])
+        total_nuevas = len(nuevas['infojobs']) + len(nuevas['tecnoempleo'])
 
         mensaje = "*NUEVAS OFERTAS DE EMPLEO*\n"
         mensaje += f"Total: *{total_nuevas}* ofertas nuevas\n"
         mensaje += f"InfoJobs: {len(nuevas['infojobs'])}\n"
-        mensaje += f"Indeed: {len(nuevas['indeed'])}\n"
+        mensaje += f"TecnoEmpleo: {len(nuevas['tecnoempleo'])}\n"
         mensaje += "━━━━━━━━━━━━━━━━━━━━━\n\n"
 
         if nuevas['infojobs']:
@@ -61,10 +61,10 @@ class TelegramNotifier:
                 mensaje += self._format_offer(oferta, i)
                 mensaje += "\n"
 
-        if nuevas['indeed']:
-            mensaje += "*INDEED*\n\n"
-            for i, oferta in enumerate(nuevas['indeed'], 1):
-                oferta['fuente'] = 'Indeed'
+        if nuevas['tecnoempleo']:
+            mensaje += "*TECNOEMPLEO*\n\n"
+            for i, oferta in enumerate(nuevas['tecnoempleo'], 1):
+                oferta['fuente'] = 'TecnoEmpleo'
                 mensaje += self._format_offer(oferta, i)
                 mensaje += "\n"
 
@@ -89,7 +89,7 @@ class TelegramNotifier:
 
     async def send_new_offers(self, nuevas: Dict[str, List[Dict]]) -> bool:
         # Envía notificación con las ofertas nuevas
-        total_nuevas = len(nuevas['infojobs']) + len(nuevas['indeed'])
+        total_nuevas = len(nuevas['infojobs']) + len(nuevas['tecnoempleo'])
 
         if total_nuevas == 0:
             print("INFO: No hay ofertas nuevas, no se enviará notificación a Telegram")
