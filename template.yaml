@@ -75,6 +75,29 @@ Resources:
             Path: /{proxy+}
             Method: ANY
 
+  TelegramFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: job-monitor-telegram
+      CodeUri: .
+      Handler: lambda/telegram/handler.lambda_handler
+      Description: Bot de Telegram con webhook para consultar ofertas
+      Environment:
+        Variables:
+          TELEGRAM_BOT_TOKEN: !Ref TelegramBotToken
+          TELEGRAM_CHAT_ID: !Ref TelegramChatId
+          OPENAI_API_KEY: !Ref OpenAIApiKey
+      Policies:
+        - S3FullAccessPolicy:
+            BucketName: job-monitor-data
+        - CloudWatchLogsFullAccess
+      Events:
+        TelegramWebhook:
+          Type: Api
+          Properties:
+            Path: /telegram-webhook
+            Method: POST
+
 Outputs:
   ScrapingFunctionArn:
     Description: ARN de la Lambda de scraping
@@ -95,3 +118,15 @@ Outputs:
   ApiUrl:
     Description: URL base del API Gateway
     Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/'
+
+  TelegramFunctionArn:
+    Description: ARN de la Lambda Telegram
+    Value: !GetAtt TelegramFunction.Arn
+
+  TelegramFunctionName:
+    Description: Nombre de la Lambda Telegram
+    Value: !Ref TelegramFunction
+
+  TelegramWebhookUrl:
+    Description: URL del webhook de Telegram (usar con setWebhook)
+    Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/telegram-webhook'
