@@ -6,10 +6,10 @@ from src.storage.json_storage import JSONStorage
 
 class JobScraper:
 
-    def __init__(self, base_dir: str = "."):
+    def __init__(self, base_dir: str = ".", storage_type: str = "local"):
         self.infojobs = Infojobs()
         self.tecnoempleo = TecnoEmpleo()
-        self.storage = JSONStorage(base_dir=base_dir)
+        self.storage = JSONStorage(base_dir=base_dir, storage_type=storage_type)
 
     def scrape_all(self, save_to_json: bool = True) -> Dict[str, List[Dict]]:
 

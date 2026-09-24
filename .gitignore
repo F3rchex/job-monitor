@@ -42,3 +42,7 @@ directrices.md
 data-infojobs/*.json
 data-tecnoempleo/*.json
 cleanup.log
+
+# AWS SAM
+.aws-sam/
+response.json

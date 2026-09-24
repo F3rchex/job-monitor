@@ -15,9 +15,8 @@ def lambda_handler(event, context):
     print("INFO: Iniciando scraping job desde Lambda")
 
     # Inicializar componentes con storage S3
-    scraper = JobScraper()
+    scraper = JobScraper(storage_type='s3')
     notifier = TelegramNotifier()
-    storage = JSONStorage(storage_type='s3')
 
     try:
         # Ejecutar scraping (mismo código que main.py)
