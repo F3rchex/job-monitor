@@ -1,111 +1,103 @@
 # Job Monitor - Monitor de Ofertas de Empleo
 
-Sistema automatizado de scraping que busca ofertas de empleo de Python en Madrid, detecta nuevas ofertas y envía notificaciones diarias a Telegram.
+Sistema automatizado de scraping que busca ofertas de empleo de Python en Madrid, detecta nuevas ofertas y envía notificaciones a Telegram.
 
-**ESTADO: EN PRODUCCIÓN** - Desplegado en VPS DigitalOcean, ejecutándose automáticamente cada día a las 11:00 AM desde julio 2026.
+**ESTADO: EN PRODUCCIÓN** - Arquitectura serverless en AWS Lambda desde septiembre 2026. Scraping automático diario a las 11:00 AM, API REST y bot Telegram conversacional.
 
 ## Características
 
-- **Scraping de múltiples fuentes**: InfoJobs y TecnoEmpleo
+- **Scraping automático**: Scraping diario con EventBridge (11:00 AM Madrid)
+- **Múltiples fuentes**: InfoJobs y TecnoEmpleo
 - **Anti-detección**: Random delays, User-Agents rotados, headers completos
-- **Detección inteligente**: Identifica ofertas nuevas comparando por link único
-- **Almacenamiento JSON**: Historial de scraping con timestamp
-- **Notificaciones Telegram**: Mensajes formateados push
-- **API REST Flask**: Endpoints HTTP con autenticación Bearer token
-- **Automatización n8n**: Workflow activo ejecutándose diariamente
-- **Chatbot IA con OpenAI**: Consulta ofertas con GPT-4o-mini
-- **Bot Telegram conversacional**: Comandos y mensajes libres
-- **Despliegue en producción**: VPS DigitalOcean con servicios systemd
+- **Detección inteligente**: Identifica ofertas nuevas por link único
+- **Storage S3**: Historial de scraping en bucket AWS
+- **Notificaciones Telegram**: Mensajes push cuando hay ofertas nuevas
+- **API REST serverless**: 3 endpoints HTTP con API Gateway
+- **Chatbot IA**: Consulta ofertas con OpenAI GPT-4o-mini
+- **Bot Telegram**: Webhook con comandos y mensajes libres
+- **Infraestructura como código**: SAM (Serverless Application Model)
 
 ## Arquitectura del Proyecto
 
 ```
 job-monitor/
-├── src/
+├── lambda/
+│   ├── scraping/
+│   │   └── handler.py        # EventBridge cron handler
 │   ├── api/
-│   │   ├── auth.py           # Decorador @require_api_key
-│   │   └── routes.py         # Endpoints /health, /trigger-scraping, /chat
-│   ├── chatbot/
-│   │   ├── openai_client.py  # Cliente OpenAI GPT-4o-mini
-│   │   └── chat_service.py   # Servicio de chat with function calling
+│   │   └── handler.py        # API Gateway handler
+│   └── telegram/
+│       └── handler.py        # Telegram webhook handler
+├── src/
 │   ├── scrapers/
-│   │   ├── infojobs.py       # Scraper InfoJobs (BeautifulSoup)
-│   │   ├── tecnoempleo.py    # Scraper TecnoEmpleo (BeautifulSoup)
+│   │   ├── infojobs.py       # Scraper InfoJobs
+│   │   ├── tecnoempleo.py    # Scraper TecnoEmpleo
 │   │   └── scraper.py        # Orquestador principal
 │   ├── storage/
-│   │   └── json_storage.py   # Gestión de almacenamiento
+│   │   └── json_storage.py   # Storage dual (local/S3)
 │   ├── telegram/
 │   │   ├── notifier.py       # Notificaciones push
-│   │   └── bot_handler.py    # Bot conversacional
-│   ├── utils/
-│   │   └── scraper_utils.py  # Anti-detección (delays, headers, UA rotation)
-│   └── config.py             # Configuración (tokens, API keys)
-├── data-infojobs/            # JSONs de InfoJobs
-├── data-tecnoempleo/         # JSONs de TecnoEmpleo
-├── app.py                    # Servidor Flask API
-├── main.py                   # Script principal (ejecución manual)
-├── test_chat.py              # Test endpoint /chat
-└── test_bot_telegram.py      # Test bot conversacional
+│   │   └── bot_handler.py    # Bot polling (legacy)
+│   ├── chatbot/
+│   │   ├── openai_client.py  # Cliente OpenAI
+│   │   └── chat_service.py   # Servicio chat + function calling
+│   └── api/
+│       ├── auth.py           # Decorador @require_api_key
+│       └── routes.py         # Flask routes (legacy)
+├── template.yaml             # SAM infrastructure
+├── app.py                    # Flask API (legacy)
+└── main.py                   # Script manual (legacy)
 ```
 
-## Arquitectura de Producción
+## Arquitectura de Producción (AWS Lambda)
 
 ```
-VPS DigitalOcean (Frankfurt)
-├── Flask API (puerto 5001)
-│   └── systemd service: job-monitor.service
-│   └── Endpoints: /health, /trigger-scraping, /chat
-│
-├── Bot Telegram conversacional
-│   └── systemd service: telegram-bot.service
-│   └── Comandos: /start, /help, /ofertas + mensajes libres
-│
-├── n8n (puerto 5678)
-│   └── systemd service: n8n.service
-│
-└── Workflow n8n activo
-    └── Schedule Trigger (11:00 AM diario)
-        └── HTTP POST /trigger-scraping (con API key)
-            └── Scraping → Notificación Telegram
+EventBridge (cron: 0 10 * * ? *)
+    └─> Lambda: job-monitor-scraping
+        └─> Scraping InfoJobs + TecnoEmpleo
+            └─> S3: job-monitor-data
+                └─> Telegram Notifier (si hay nuevas)
+
+API Gateway
+├─> GET  /health
+├─> POST /trigger-scraping
+└─> POST /chat
+    └─> Lambda: job-monitor-api
+        └─> ChatService + OpenAI
+            └─> S3: job-monitor-data
+
+Telegram API
+    └─> Webhook: /telegram-webhook
+        └─> Lambda: job-monitor-telegram
+            └─> ChatService + OpenAI
+                └─> S3: job-monitor-data
 ```
 
 ## Despliegue en Producción
 
-El proyecto está desplegado en un VPS DigitalOcean:
+**Infraestructura AWS:**
+- **Región:** eu-west-1 (Irlanda)
+- **Lambda Functions:** 3 (scraping, api, telegram)
+- **S3 Bucket:** job-monitor-data
+- **API Gateway:** REST API con stage Prod
+- **EventBridge:** Cron diario 11:00 AM Madrid
+- **Costo:** ~$0.10/mes (vs $12/mes VPS anterior)
 
-- **IP pública:** 164.92.138.18
-- **API:** http://164.92.138.18:5001
-- **n8n:** http://164.92.138.18:5678
-- **Región:** Frankfurt (FRA1)
-- **Recursos:** 2GB RAM, 1 vCPU, 50GB SSD
-- **Coste:** $12/mes
+**URLs de producción:**
+```
+API REST:
+https://zxf1jojs42.execute-api.eu-west-1.amazonaws.com/Prod/health
+https://zxf1jojs42.execute-api.eu-west-1.amazonaws.com/Prod/trigger-scraping
+https://zxf1jojs42.execute-api.eu-west-1.amazonaws.com/Prod/chat
 
-### Servicios configurados
+Telegram Webhook:
+https://zxf1jojs42.execute-api.eu-west-1.amazonaws.com/Prod/telegram-webhook
 
-**Flask API (systemd):**
-- Auto-arranque al iniciar servidor
-- Restart automático si falla
-- Logs: `sudo journalctl -u job-monitor`
+S3 Bucket:
+s3://job-monitor-data/
+```
 
-**Bot Telegram (systemd):**
-- Auto-arranque al iniciar servidor
-- Restart automático si falla
-- Logs: `sudo journalctl -u telegram-bot`
-
-**n8n (systemd):**
-- Auto-arranque al iniciar servidor
-- Workflow activo con Schedule Trigger
-- Logs: `sudo journalctl -u n8n`
-
-### Seguridad
-
-- Usuario no-root con SSH key authentication
-- Firewall UFW: solo puertos 22, 5001, 5678 abiertos
-- API protegida con Bearer token
-- Variables sensibles en archivo .env
-
-
-## Instalación Local (Desarrollo)
+## Instalación Local
 
 ### 1. Clonar repositorio
 
@@ -129,122 +121,255 @@ pip install -r requirements.txt
 
 ### 4. Configurar variables de entorno
 
-Crea un archivo `.env` en la raíz del proyecto:
+Crea `.env` en la raíz:
 
 ```env
-# OpenAI (chatbot IA)
-OPENAI_API_KEY=tu_api_key_aqui
+# OpenAI
+OPENAI_API_KEY=sk-proj-...
 
 # Telegram
-TELEGRAM_BOT_TOKEN=tu_bot_token_aqui
-TELEGRAM_CHAT_ID=tu_chat_id_aqui
+TELEGRAM_BOT_TOKEN=123456:ABC-DEF...
+TELEGRAM_CHAT_ID=123456789
 
-# API Flask
-API_KEY=tu_token_seguro_aqui
+# API Flask (desarrollo local)
+API_KEY=tu_token_seguro
 PORT=5001
 CHAT_API_URL=http://localhost:5001/chat
 ```
 
-**Cómo obtener las credenciales:**
+### 5. Instalar AWS SAM CLI
 
-- **Bot Token**: Hablar con [@BotFather](https://t.me/BotFather) en Telegram → `/newbot`
-- **Chat ID**: Hablar con [@userinfobot](https://t.me/userinfobot) → te dará tu ID
+```bash
+brew install aws-sam-cli
+```
 
-## Uso
+### 6. Configurar AWS credentials
 
-### API Flask (Producción)
+```bash
+aws configure
+# Ingresar AWS Access Key ID y Secret Access Key
+```
 
-Arranca el servidor Flask API:
+## Deploy a AWS Lambda
+
+### Build
+
+```bash
+sam build
+```
+
+### Deploy
+
+Primera vez (configuración interactiva):
+```bash
+sam deploy --guided
+```
+
+Deploys posteriores:
+```bash
+sam deploy
+```
+
+### Ver logs en tiempo real
+
+```bash
+# Scraping job
+aws logs tail /aws/lambda/job-monitor-scraping --follow
+
+# API
+aws logs tail /aws/lambda/job-monitor-api --follow
+
+# Telegram bot
+aws logs tail /aws/lambda/job-monitor-telegram --follow
+```
+
+### Invocar Lambda manualmente
+
+```bash
+aws lambda invoke --function-name job-monitor-scraping response.json
+cat response.json
+```
+
+## Uso en Desarrollo Local
+
+### API Flask (legacy)
 
 ```bash
 python app.py
 ```
 
-Endpoints disponibles:
-- **GET /health**: Health check (sin autenticación)
-- **POST /trigger-scraping**: Ejecuta scraping (requiere API key)
-- **POST /chat**: Chatbot conversacional (requiere API key)
-
-Ejemplos de uso:
+Endpoints:
 ```bash
+# Health check
+curl http://localhost:5001/health
+
 # Trigger scraping
 curl -X POST http://localhost:5001/trigger-scraping \
   -H "Authorization: Bearer TU_API_KEY"
 
-# Chatbot
+# Chat
 curl -X POST http://localhost:5001/chat \
   -H "Authorization: Bearer TU_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"message": "¿Cuántas ofertas hay?"}'
+  -d '{"message": "Cuantas ofertas hay?"}'
 ```
 
-### Bot Telegram Conversacional
-
-Arranca el bot conversacional:
+### Bot Telegram (legacy - polling)
 
 ```bash
-python test_bot_telegram.py
+python src/telegram/bot_handler.py
 ```
 
-**Comandos disponibles:**
-- `/start` - Mensaje de bienvenida
+Comandos:
+- `/start` - Bienvenida
 - `/help` - Ayuda
-- `/ofertas` - Resumen de ofertas disponibles
-- Mensajes libres: "¿Qué ofertas hay de Python senior?"
+- `/ofertas` - Resumen ofertas
+- Mensajes libres: "Que ofertas hay de senior?"
 
-### Script Principal (Manual)
-
-Ejecuta scraping, detecta nuevas ofertas y envía a Telegram:
+### Script manual
 
 ```bash
 python main.py
 ```
 
-### API REST Endpoints
+## Uso en Producción (AWS)
 
-- `GET /health` - Health check
-- `POST /trigger-scraping` - Ejecuta scraping (requiere API key)
-- `POST /chat` - Chatbot conversacional (requiere API key)
+### API REST
 
-## Notas Técnicas
+```bash
+# Health check
+curl https://zxf1jojs42.execute-api.eu-west-1.amazonaws.com/Prod/health
 
-- **InfoJobs:** Scraping con BeautifulSoup (API cerrada desde julio 2026)
-- **TecnoEmpleo:** Scraping con BeautifulSoup (portal IT específico, menos protección)
-- **Indeed:** Descartado (anti-bot muy agresivo, requiere proxies caros)
-- **LinkedIn:** No incluido (requiere login, viola ToS)
+# Trigger scraping manual
+curl -X POST https://zxf1jojs42.execute-api.eu-west-1.amazonaws.com/Prod/trigger-scraping
 
-### Medidas anti-detección implementadas:
-- Random delays (2-5 segundos entre requests)
-- User-Agent rotation (6 variantes diferentes)
-- Headers completos (11 headers que simulan navegador real)
-- Session persistence (mantiene cookies)
+# Chat
+curl -X POST https://zxf1jojs42.execute-api.eu-west-1.amazonaws.com/Prod/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Cuantas ofertas hay?"}'
+```
+
+### Bot Telegram
+
+Bot activo 24/7 con webhook. Enviar mensaje directo al bot en Telegram:
+- `/start` - Bienvenida
+- `/help` - Ayuda
+- `/ofertas` - Resumen ofertas
+- Mensajes libres: "Muestrame ofertas remotas"
+
+### Ver archivos en S3
+
+```bash
+# Listar todos los archivos
+aws s3 ls s3://job-monitor-data/ --recursive
+
+# Descargar archivo específico
+aws s3 cp s3://job-monitor-data/infojobs/infojobs_2026-09-24_11-00-00.json .
+```
+
+## Configuración Telegram Webhook
+
+El webhook ya está configurado. Para cambiarlo:
+
+```bash
+# Configurar webhook
+curl -X POST "https://api.telegram.org/bot<TOKEN>/setWebhook" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://zxf1jojs42.../telegram-webhook"}'
+
+# Verificar webhook
+curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
+
+# Borrar webhook
+curl -X POST "https://api.telegram.org/bot<TOKEN>/deleteWebhook"
+```
 
 ## Stack Tecnológico
 
 **Backend:**
 - Python 3.12
-- Flask 3.0.3 (API REST)
 - OpenAI 1.35.0 (GPT-4o-mini)
-- BeautifulSoup4 4.15.0 (scraping InfoJobs y TecnoEmpleo)
-- python-telegram-bot 22.8 (bot conversacional)
+- BeautifulSoup4 4.15.0
+- python-telegram-bot 22.8 (legacy)
+- requests 2.32.3
 
-**Automatización:**
-- n8n 2.8.4 (workflow automation)
-- Node.js 20.20.2
+**AWS:**
+- Lambda (Python 3.12 runtime)
+- S3 (storage)
+- API Gateway (REST API)
+- EventBridge (cron scheduler)
+- CloudWatch (logs)
+- IAM (permissions)
 
 **Infraestructura:**
-- Ubuntu 24.04 LTS
-- systemd (gestión servicios)
-- UFW (firewall)
+- AWS SAM (Serverless Application Model)
+- CloudFormation (bajo el capó)
 
-**Requisitos:**
-- Python 3.8+
-- Chrome/Chromium (para Selenium)
+**Desarrollo local (legacy):**
+- Flask 3.0.3
 
-## Proximamente
+## Notas Técnicas
 
-Dado que tenemos un script para borrar los .json generados por ahora no es necesario una BD dado que no es un proyecto con mucha informacion en el workflow, mas adelante posiblemente se implemente una BD para realizar pruebas con otro proyecto en paralelo.
+**Scrapers:**
+- InfoJobs: BeautifulSoup (API cerrada julio 2026)
+- TecnoEmpleo: BeautifulSoup (menos protección anti-bot)
+- Indeed: Descartado (anti-bot agresivo)
+- LinkedIn: No viable (requiere login, viola ToS)
+
+**Anti-detección:**
+- Random delays (2-5s entre requests)
+- User-Agent rotation (6 variantes)
+- Headers completos (11 headers navegador real)
+- Session persistence (mantiene cookies)
+
+**Storage dual:**
+- Local: `storage_type='local'` (desarrollo)
+- S3: `storage_type='s3'` (producción Lambda)
+
+**Bot Telegram:**
+- VPS legacy: polling con `run_polling()`
+- Lambda producción: webhook HTTP
+- Solo uno puede estar activo (Telegram API limita)
+
+## Migración VPS → Lambda
+
+**Antes (VPS DigitalOcean):**
+- Servidor corriendo 24/7
+- n8n para scheduling
+- Costo: $12/mes
+
+**Después (AWS Lambda):**
+- Pay-per-use (solo cuando se ejecuta)
+- EventBridge para scheduling
+- Costo: ~$0.10/mes
+
+**Ahorro:** $11.90/mes = $142.80/año
+
+## Comandos Útiles
+
+**SAM:**
+```bash
+sam build                    # Compilar
+sam deploy                   # Desplegar
+sam logs -n ScrapingFunction # Ver logs
+sam local invoke             # Test local
+```
+
+**AWS CLI:**
+```bash
+aws lambda list-functions    # Listar Lambdas
+aws s3 ls s3://job-monitor-data/ --recursive  # Ver S3
+aws logs tail /aws/lambda/job-monitor-scraping --follow  # Logs tiempo real
+```
+
+**Git:**
+```bash
+git status
+git add .
+git commit -m "feat: descripción"
+git push origin main
+```
 
 ---
 
-**Desarrollado por Fernando Chávez** | Proyecto de portfolio para práctica de scraping y automatización
+**Desarrollado por Fernando Chávez** | Proyecto portfolio - Scraping, automatización y arquitectura serverless
