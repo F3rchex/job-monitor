@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Description: Job Monitor - Lambda scraping infrastructure
+
+Globals:
+  Function:
+    Timeout: 300
+    MemorySize: 512
+    Runtime: python3.12
+    Environment:
+      Variables:
+        TZ: Europe/Madrid
+
+Parameters:
+  TelegramBotToken:
+    Type: String
+    NoEcho: true
+    Description: Token del bot de Telegram
+
+  TelegramChatId:
+    Type: String
+    Description: ID del chat de Telegram
+
+  OpenAIApiKey:
+    Type: String
+    NoEcho: true
+    Description: API Key de OpenAI
+
+Resources:
+  ScrapingFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: job-monitor-scraping
+      CodeUri: .
+      Handler: lambda/scraping/handler.lambda_handler
+      Description: Scraping diario de ofertas Python en Madrid
+      Environment:
+        Variables:
+          TELEGRAM_BOT_TOKEN: !Ref TelegramBotToken
+          TELEGRAM_CHAT_ID: !Ref TelegramChatId
+          OPENAI_API_KEY: !Ref OpenAIApiKey
+      Policies:
+        - S3FullAccessPolicy:
+            BucketName: job-monitor-data
+        - CloudWatchLogsFullAccess
+      Events:
+        DailySchedule:
+          Type: Schedule
+          Properties:
+            Schedule: 'cron(0 10 * * ? *)'
+            Description: Scraping diario 11:00 AM Madrid (10:00 UTC)
+            Enabled: true
+
+Outputs:
+  ScrapingFunctionArn:
+    Description: ARN de la Lambda de scraping
+    Value: !GetAtt ScrapingFunction.Arn
+
+  ScrapingFunctionName:
+    Description: Nombre de la Lambda
+    Value: !Ref ScrapingFunction
