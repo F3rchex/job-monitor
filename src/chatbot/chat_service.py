@@ -4,9 +4,9 @@ from datetime import datetime
 from src.storage.json_storage import JSONStorage
 
 class ChatService:
-    def __init__(self):
+    def __init__(self, storage_type='local'):
         self.openai_client = OpenAIClient()
-        self.storage = JSONStorage()
+        self.storage = JSONStorage(storage_type=storage_type)
         #historial de conversacion
         self.messages = []
 

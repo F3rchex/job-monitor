@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 
-Description: Job Monitor - Lambda scraping infrastructure
+Description: Job Monitor - Lambda scraping + API infrastructure
 
 Globals:
   Function:
@@ -52,6 +52,29 @@ Resources:
             Description: Scraping diario 11:00 AM Madrid (10:00 UTC)
             Enabled: true
 
+  APIFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: job-monitor-api
+      CodeUri: .
+      Handler: lambda/api/handler.lambda_handler
+      Description: API REST para endpoints Flask (health, trigger-scraping, chat)
+      Environment:
+        Variables:
+          TELEGRAM_BOT_TOKEN: !Ref TelegramBotToken
+          TELEGRAM_CHAT_ID: !Ref TelegramChatId
+          OPENAI_API_KEY: !Ref OpenAIApiKey
+      Policies:
+        - S3FullAccessPolicy:
+            BucketName: job-monitor-data
+        - CloudWatchLogsFullAccess
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+
 Outputs:
   ScrapingFunctionArn:
     Description: ARN de la Lambda de scraping
@@ -60,3 +83,15 @@ Outputs:
   ScrapingFunctionName:
     Description: Nombre de la Lambda
     Value: !Ref ScrapingFunction
+
+  APIFunctionArn:
+    Description: ARN de la Lambda API
+    Value: !GetAtt APIFunction.Arn
+
+  APIFunctionName:
+    Description: Nombre de la Lambda API
+    Value: !Ref APIFunction
+
+  ApiUrl:
+    Description: URL base del API Gateway
+    Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/'
