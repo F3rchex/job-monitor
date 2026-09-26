@@ -48,7 +48,7 @@ Resources:
         DailySchedule:
           Type: Schedule
           Properties:
-            Schedule: 'cron(0 10 * * ? *)'
+            Schedule: 'cron(0 9 * * ? *)'
             Description: Scraping diario 11:00 AM Madrid (10:00 UTC)
             Enabled: true
 
